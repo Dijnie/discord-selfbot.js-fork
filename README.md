@@ -3,7 +3,7 @@
 > 
 > **This project is no longer actively maintained and this repository has been archived.**
 >
-> You can read the full announcement [here](https://github.com/aiko-chan-ai/discord.js-selfbot-v13/discussions/1743)
+> You can read the full announcement [here](https://github.com/dijnie/discord.js-selfbot-v14/discussions/1743)
 
 <div align="center">
   <br />
@@ -18,16 +18,16 @@
 
 ## About
 
-<strong>Welcome to `discord.js-selfbot-v13@v3.7`, based on `discord.js@13.17` and backport `discord.js@14.21.0`</strong>
+<strong>Welcome to `discord.js-selfbot-v14@v3.7`, based on `discord.js@13.17` and backport `discord.js@14.21.0`</strong>
 
-- discord.js-selfbot-v13 is a [Node.js](https://nodejs.org) module that allows user accounts to interact with the Discord API v9.
+- discord.js-selfbot-v14 is a [Node.js](https://nodejs.org) module that allows user accounts to interact with the Discord API v9.
 
 
 <div align="center">
   <p>
-    <a href="https://www.npmjs.com/package/discord.js-selfbot-v13"><img src="https://img.shields.io/npm/v/discord.js-selfbot-v13.svg" alt="npm version" /></a>
-    <a href="https://www.npmjs.com/package/discord.js-selfbot-v13"><img src="https://img.shields.io/npm/dt/discord.js-selfbot-v13.svg" alt="npm downloads" /></a>
-    <a href="https://github.com/aiko-chan-ai/discord.js-selfbot-v13/actions"><img src="https://github.com/aiko-chan-ai/discord.js-selfbot-v13/actions/workflows/lint.yml/badge.svg" alt="Tests status" /></a>
+    <a href="https://www.npmjs.com/package/discord.js-selfbot-v14"><img src="https://img.shields.io/npm/v/discord.js-selfbot-v14.svg" alt="npm version" /></a>
+    <a href="https://www.npmjs.com/package/discord.js-selfbot-v14"><img src="https://img.shields.io/npm/dt/discord.js-selfbot-v14.svg" alt="npm downloads" /></a>
+    <a href="https://github.com/dijnie/discord.js-selfbot-v14/actions"><img src="https://github.com/dijnie/discord.js-selfbot-v14/actions/workflows/lint.yml/badge.svg" alt="Tests status" /></a>
   </p>
 </div>
 
@@ -39,7 +39,7 @@
 
 ### <strong>[Document Website](https://discordjs-self-v13.netlify.app/)</strong>
 
-### <strong>[Example Code](https://github.com/aiko-chan-ai/discord.js-selfbot-v13/tree/main/examples)</strong>
+### <strong>[Example Code](https://github.com/dijnie/discord.js-selfbot-v14/tree/main/examples)</strong>
 
 ## Features (User)
 - [x] Message
@@ -57,13 +57,13 @@
 > **Node.js 20.18.0 or newer is required**
 
 ```sh-session
-npm install discord.js-selfbot-v13@latest
+npm install discord.js-selfbot-v14@latest
 ```
 
 ## Example
 
 ```js
-const { Client } = require('discord.js-selfbot-v13');
+const { Client } = require('discord.js-selfbot-v14');
 const client = new Client();
 
 client.on('ready', async () => {
@@ -109,16 +109,16 @@ console.log(`%cYou now have your token in the clipboard!`, 'font-size: 16px');
 - See [the contribution guide](https://github.com/discordjs/discord.js/blob/main/.github/CONTRIBUTING.md) if you'd like to submit a PR.
 
 ## Need help?
-Github Discussion: [Here](https://github.com/aiko-chan-ai/discord.js-selfbot-v13/discussions)
+Github Discussion: [Here](https://github.com/dijnie/discord.js-selfbot-v14/discussions)
 
 ## Credits
 - [Discord.js](https://github.com/discordjs/discord.js)
 
 ## <strong>Other project(s)
 
-- 📘 [***aiko-chan-ai/DiscordBotClient***](https://github.com/aiko-chan-ai/DiscordBotClient) <br/>
+- 📘 [***dijnie/DiscordBotClient***](https://github.com/dijnie/DiscordBotClient) <br/>
   A patched version of discord, with bot login support
 
 ## Star History
 
-[![Star History Chart](https://api.star-history.com/svg?repos=aiko-chan-ai/discord.js-selfbot-v13&type=Date)](https://star-history.com/#aiko-chan-ai/discord.js-selfbot-v13&Date)
+[![Star History Chart](https://api.star-history.com/svg?repos=dijnie/discord.js-selfbot-v14&type=Date)](https://star-history.com/#dijnie/discord.js-selfbot-v14&Date)

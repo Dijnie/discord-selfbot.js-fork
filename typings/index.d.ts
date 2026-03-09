@@ -198,7 +198,7 @@ import { Socket } from 'node:dgram';
 
 //#region Classes
 
-// RPC by aiko-chan-ai
+// RPC by dijnie
 export interface RichButton {
   name: string;
   url: string;
