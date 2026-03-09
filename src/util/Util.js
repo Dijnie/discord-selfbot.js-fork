@@ -420,20 +420,20 @@ class Util extends null {
    * * A URL-encoded UTF-8 emoji (no id)
    * * A Discord custom emoji (`<:name:id>` or `<a:name:id>`)
    * @param {string} text Emoji string to parse
-   * @returns {APIEmoji} Object with `animated`, `name`, and `id` properties
+   * @returns {?PartialEmoji} Object with `animated`, `name`, and `id` properties
    * @private
    */
   static parseEmoji(text) {
-    if (text.includes('%')) text = decodeURIComponent(text);
-    if (!text.includes(':')) return { animated: false, name: text, id: null };
-    const match = text.match(/<?(?:(a):)?(\w{2,32}):(\d{17,19})?>?/);
-    return match && { animated: Boolean(match[1]), name: match[2], id: match[3] ?? null };
+    const decodedText = text.includes('%') ? decodeURIComponent(text) : text;
+    if (!decodedText.includes(':')) return { animated: false, name: decodedText, id: null };
+    const match = /<?(?:(?<animated>a):)?(?<name>\w{2,32}):(?<id>\d{17,19})?>?/.exec(decodedText);
+    return match && { animated: Boolean(match.groups.animated), name: match.groups.name, id: match.groups.id ?? null };
   }
 
   /**
    * Resolves a partial emoji object from an {@link EmojiIdentifierResolvable}, without checking a Client.
-   * @param {EmojiIdentifierResolvable} emoji Emoji identifier to resolve
-   * @returns {?RawEmoji}
+   * @param {Emoji|EmojiIdentifierResolvable} emoji Emoji identifier to resolve
+   * @returns {?(PartialEmoji|PartialEmojiOnlyId)} Supplying a snowflake yields `PartialEmojiOnlyId`.
    * @private
    */
   static resolvePartialEmoji(emoji) {
@@ -442,6 +442,29 @@ class Util extends null {
     const { id, name, animated } = emoji;
     if (!id && !name) return null;
     return { id, name, animated: Boolean(animated) };
+  }
+
+  /**
+   * Resolves a {@link GuildEmoji} from an emoji id by searching all available guilds.
+   * @param {Client} client The client to use to resolve the emoji
+   * @param {Snowflake} emojiId The emoji id to resolve
+   * @returns {?GuildEmoji}
+   * @private
+   */
+  static resolveGuildEmoji(client, emojiId) {
+    for (const guild of client.guilds.cache.values()) {
+      if (!guild.available) {
+        continue;
+      }
+
+      const emoji = guild.emojis.cache.get(emojiId);
+
+      if (emoji) {
+        return emoji;
+      }
+    }
+
+    return null;
   }
 
   /**
@@ -621,6 +644,23 @@ class Util extends null {
   }
 
   /**
+   * Find the filename to use for attachments.
+   * @param {BufferResolvable|Stream} thing The thing to attach as attachment
+   * @returns {string} filename to use
+   */
+  static findName(thing) {
+    if (typeof thing === 'string') {
+      return Util.basename(thing);
+    }
+
+    if (thing.path) {
+      return Util.basename(thing.path);
+    }
+
+    return 'file.jpg';
+  }
+
+  /**
    * Breaks user, role and everyone/here mentions by adding a zero width space after every @ character
    * @param {string} str The string to sanitize
    * @returns {string}
@@ -652,32 +692,42 @@ class Util extends null {
    * @returns {string}
    */
   static cleanContent(str, channel) {
-    str = str
-      .replace(/<@!?[0-9]+>/g, input => {
-        const id = input.replace(/<|!|>|@/g, '');
-        if (channel.type === 'DM') {
-          const user = channel.client.users.cache.get(id);
-          return user ? Util._removeMentions(`@${user.username}`) : input;
-        }
+    return str.replaceAll(
+      /<(?:(?<type>@[!&]?|#)|(?:\/(?<commandName>[-_\p{L}\p{N}\p{sc=Deva}\p{sc=Thai} ]+):)|(?:a?:(?<emojiName>[\w]+):))(?<id>\d{17,19})>/gu,
+      (match, type, commandName, emojiName, id) => {
+        if (commandName) return `/${commandName}`;
 
-        const member = channel.guild?.members.cache.get(id);
-        if (member) {
-          return Util._removeMentions(`@${member.displayName}`);
-        } else {
-          const user = channel.client.users.cache.get(id);
-          return user ? Util._removeMentions(`@${user.username}`) : input;
+        if (emojiName) return `:${emojiName}:`;
+
+        switch (type) {
+          case '@':
+          case '@!': {
+            const member = channel.guild?.members.cache.get(id);
+            if (member) {
+              return Util._removeMentions(`@${member.displayName}`);
+            }
+
+            const user = channel.client.users.cache.get(id);
+            return user ? Util._removeMentions(`@${user.displayName ?? user.username}`) : match;
+          }
+
+          case '@&': {
+            if (channel.type === 'DM') return match;
+            const role = channel.guild.roles.cache.get(id);
+            return role ? `@${role.name}` : match;
+          }
+
+          case '#': {
+            const mentionedChannel = channel.client.channels.cache.get(id);
+            return mentionedChannel ? `#${mentionedChannel.name}` : match;
+          }
+
+          default: {
+            return match;
+          }
         }
-      })
-      .replace(/<#[0-9]+>/g, input => {
-        const mentionedChannel = channel.client.channels.cache.get(input.replace(/<|#|>/g, ''));
-        return mentionedChannel ? `#${mentionedChannel.name}` : input;
-      })
-      .replace(/<@&[0-9]+>/g, input => {
-        if (channel.type === 'DM') return input;
-        const role = channel.guild.roles.cache.get(input.replace(/<|@|>|&/g, ''));
-        return role ? `@${role.name}` : input;
-      });
-    return str;
+      },
+    );
   }
 
   /**
@@ -995,6 +1045,76 @@ class Util extends null {
    */
   static getPayloadType(codecName) {
     return payloadTypes.find(p => p.name === codecName).payload_type;
+  }
+
+  /**
+   * Parses a webhook URL for the id and token.
+   * @param {string} url The URL to parse
+   * @returns {?WebhookDataIdWithToken} `null` if the URL is invalid, otherwise the id and the token
+   */
+  static parseWebhookURL(url) {
+    const matches =
+      /https?:\/\/(?:ptb\.|canary\.)?discord\.com\/api(?:\/v\d{1,2})?\/webhooks\/(?<id>\d{17,19})\/(?<token>[\w-]{68})/i.exec(
+        url,
+      );
+
+    return matches && { id: matches.groups.id, token: matches.groups.token };
+  }
+
+  /**
+   * Transforms the resolved data received from the API.
+   * @param {SupportingInteractionResolvedData} supportingData Data to support the transformation
+   * @param {APIInteractionDataResolved} [data] The received resolved objects
+   * @returns {CommandInteractionResolvedData}
+   * @private
+   */
+  static transformResolved({ client, guild, channel }, { members, users, channels, roles, messages, attachments } = {}) {
+    const result = {};
+
+    if (members) {
+      result.members = new Collection();
+      for (const [id, member] of Object.entries(members)) {
+        const user = users[id];
+        result.members.set(id, guild?.members._add({ user, ...member }) ?? member);
+      }
+    }
+
+    if (users) {
+      result.users = new Collection();
+      for (const user of Object.values(users)) {
+        result.users.set(user.id, client.users._add(user));
+      }
+    }
+
+    if (roles) {
+      result.roles = new Collection();
+      for (const role of Object.values(roles)) {
+        result.roles.set(role.id, guild?.roles._add(role) ?? role);
+      }
+    }
+
+    if (channels) {
+      result.channels = new Collection();
+      for (const apiChannel of Object.values(channels)) {
+        result.channels.set(apiChannel.id, client.channels._add(apiChannel, guild) ?? apiChannel);
+      }
+    }
+
+    if (messages) {
+      result.messages = new Collection();
+      for (const message of Object.values(messages)) {
+        result.messages.set(message.id, channel?.messages?._add(message) ?? message);
+      }
+    }
+
+    if (attachments) {
+      result.attachments = new Collection();
+      for (const attachment of Object.values(attachments)) {
+        result.attachments.set(attachment.id, attachment);
+      }
+    }
+
+    return result;
   }
 
   static getSDPCodecName(portUdpH264, portUdpH265, portUdpOpus) {

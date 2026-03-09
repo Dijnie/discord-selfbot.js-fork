@@ -105,7 +105,13 @@ class GuildMember extends Base {
       this.premiumSinceTimestamp = data.premium_since ? new Date(data.premium_since).getTime() : null;
     }
     if ('roles' in data) this._roles = data.roles;
-    this.pending = data.pending ?? false;
+
+    if ('pending' in data) {
+      this.pending = data.pending;
+    } else if (!this.partial) {
+      // See https://github.com/discordjs/discord.js/issues/6546 for more info.
+      this.pending ??= false;
+    }
 
     if ('communication_disabled_until' in data) {
       this.communicationDisabledUntilTimestamp =
@@ -321,6 +327,15 @@ class GuildMember extends Base {
   }
 
   /**
+   * The DM between the client's user and this member
+   * @type {?DMChannel}
+   * @readonly
+   */
+  get dmChannel() {
+    return this.client.users.dmChannel(this.id);
+  }
+
+  /**
    * The nickname of this member, or their user display name if they don't have one
    * @type {?string}
    * @readonly
@@ -359,6 +374,7 @@ class GuildMember extends Base {
    * @readonly
    */
   get kickable() {
+    if (!this.guild.members.me) throw new Error('GUILD_UNCACHED_ME');
     return this.manageable && this.guild.members.me.permissions.has(Permissions.FLAGS.KICK_MEMBERS);
   }
 
@@ -368,6 +384,7 @@ class GuildMember extends Base {
    * @readonly
    */
   get bannable() {
+    if (!this.guild.members.me) throw new Error('GUILD_UNCACHED_ME');
     return this.manageable && this.guild.members.me.permissions.has(Permissions.FLAGS.BAN_MEMBERS);
   }
 

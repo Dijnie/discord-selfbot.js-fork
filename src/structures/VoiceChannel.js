@@ -105,6 +105,26 @@ class VoiceChannel extends BaseGuildVoiceChannel {
    * @param {string} [reason] Reason for changing the camera video quality mode.
    * @returns {Promise<VoiceChannel>}
    */
+
+  /**
+   * @typedef {Object} SendSoundboardSoundOptions
+   * @property {string} soundId The id of the soundboard sound to send
+   * @property {string} [guildId] The id of the guild the soundboard sound is a part of
+   */
+
+  /**
+   * Send a soundboard sound to a voice channel the client user is connected to.
+   * @param {SendSoundboardSoundOptions} sound The sound to send
+   * @returns {Promise<void>}
+   */
+  async sendSoundboardSound(sound) {
+    await this.client.api.channels(this.id)['send-soundboard-sound'].post({
+      data: {
+        sound_id: sound.soundId,
+        source_guild_id: sound.guildId ?? undefined,
+      },
+    });
+  }
 }
 
 module.exports = VoiceChannel;

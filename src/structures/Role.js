@@ -243,7 +243,9 @@ class Role extends Base {
    * @readonly
    */
   get members() {
-    return this.guild.members.cache.filter(m => m.roles.cache.has(this.id));
+    return this.id === this.guild.id
+      ? this.guild.members.cache.clone()
+      : this.guild.members.cache.filter(member => member._roles.includes(this.id));
   }
 
   /**
@@ -264,13 +266,14 @@ class Role extends Base {
    * @readonly
    */
   get position() {
-    let count = 0;
-    for (const role of this.guild.roles.cache.values()) {
-      if (this.rawPosition > role.rawPosition) count++;
-      else if (this.rawPosition === role.rawPosition && BigInt(this.id) < BigInt(role.id)) count++;
-    }
-
-    return count;
+    return this.guild.roles.cache.reduce(
+      (acc, role) =>
+        acc +
+        (this.rawPosition === role.rawPosition
+          ? BigInt(this.id) < BigInt(role.id)
+          : this.rawPosition > role.rawPosition),
+      0,
+    );
   }
 
   /**

@@ -245,6 +245,27 @@ class GuildMemberManager extends CachedManager {
   }
 
   /**
+   * Options used for listing guild members.
+   * @typedef {Object} GuildListMembersOptions
+   * @property {Snowflake} [after] Limit fetching members to those with an id greater than the supplied id
+   * @property {number} [limit] Maximum number of members to list
+   * @property {boolean} [cache=true] Whether or not to cache the fetched member(s)
+   */
+
+  /**
+   * Lists up to 1000 members of the guild.
+   * @param {GuildListMembersOptions} [options] Options for listing members
+   * @returns {Promise<Collection<Snowflake, GuildMember>>}
+   */
+  async list({ after, limit, cache = true } = {}) {
+    const query = {};
+    if (after) query.after = after;
+    if (limit) query.limit = limit;
+    const data = await this.client.api.guilds(this.guild.id).members.get({ query });
+    return data.reduce((col, member) => col.set(member.user.id, this._add(member, cache)), new Collection());
+  }
+
+  /**
    * The data for editing a guild member.
    * @typedef {Object} GuildMemberEditData
    * @property {?string} [nick] The nickname to set for the member
@@ -317,6 +338,34 @@ class GuildMemberManager extends CachedManager {
     const clone = this.cache.get(id)?._clone();
     clone?._patch(d);
     return clone ?? this._add(d, false);
+  }
+
+  /**
+   * The data for editing the current user's guild member.
+   * @typedef {Object} GuildMemberEditMeOptions
+   * @property {?string} [nick] The nickname to set
+   * @property {?(BufferResolvable|Base64Resolvable)} [banner] The banner to set
+   * @property {?(BufferResolvable|Base64Resolvable)} [avatar] The avatar to set
+   * @property {?string} [bio] The bio to set
+   * @property {string} [reason] The reason to use
+   */
+
+  /**
+   * Edits the current user's guild member.
+   * @param {GuildMemberEditMeOptions} options The options to provide
+   * @returns {Promise<GuildMember>}
+   */
+  async editMe({ reason, ...options } = {}) {
+    if (typeof options.avatar !== 'undefined') {
+      options.avatar = await DataResolver.resolveImage(options.avatar);
+    }
+    if (typeof options.banner !== 'undefined') {
+      options.banner = await DataResolver.resolveImage(options.banner);
+    }
+    const data = await this.client.api.guilds(this.guild.id).members('@me').patch({ data: options, reason });
+    const clone = this.me?._clone();
+    clone?._patch(data);
+    return clone ?? this._add(data, false);
   }
 
   /**
