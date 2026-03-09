@@ -67,6 +67,8 @@ Intents.FLAGS = {
   GUILD_SCHEDULED_EVENTS: 1 << 16,
   AUTO_MODERATION_CONFIGURATION: 1 << 20,
   AUTO_MODERATION_EXECUTION: 1 << 21,
+  GUILD_MESSAGE_POLLS: 1 << 24,
+  DIRECT_MESSAGE_POLLS: 1 << 25,
 };
 
 Intents.ALL = Object.values(Intents.FLAGS).reduce((all, p) => all | p, 0);

@@ -22,9 +22,19 @@ class ThreadMemberFlags extends BitField {}
  */
 
 /**
- * Numeric thread member flags. There are currently no bitflags relevant to bots for this.
+ * Numeric thread member flags. All available properties:
+ * * `HAS_INTERACTED`
+ * * `ALL_MESSAGES`
+ * * `ONLY_MENTIONS`
+ * * `NO_MESSAGES`
  * @type {Object<string, number>}
+ * @see {@link https://discord.com/developers/docs/resources/channel#thread-member-object-thread-member-flags}
  */
-ThreadMemberFlags.FLAGS = {};
+ThreadMemberFlags.FLAGS = {
+  HAS_INTERACTED: 1 << 0,
+  ALL_MESSAGES: 1 << 1,
+  ONLY_MENTIONS: 1 << 2,
+  NO_MESSAGES: 1 << 3,
+};
 
 module.exports = ThreadMemberFlags;

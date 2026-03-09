@@ -1,6 +1,7 @@
 'use strict';
 
 const Base = require('./Base');
+const SKUFlags = require('../util/SKUFlags');
 
 /**
  * Represents a premium application SKU.
@@ -42,9 +43,9 @@ class SKU extends Base {
 
     /**
      * Flags that describe the SKU
-     * @type {number}
+     * @type {Readonly<SKUFlags>}
      */
-    this.flags = data.flags;
+    this.flags = new SKUFlags(data.flags).freeze();
   }
 }
 
