@@ -1,7 +1,7 @@
 'use strict';
 
-const CategoryChannelChildManager = require('../managers/CategoryChannelChildManager');
 const GuildChannel = require('./GuildChannel');
+const CategoryChannelChildManager = require('../managers/CategoryChannelChildManager');
 
 /**
  * Represents a guild category channel on Discord.

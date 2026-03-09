@@ -226,10 +226,7 @@ class GuildEmojiManager extends BaseGuildEmojiManager {
     if (!me) throw new Error('GUILD_UNCACHED_ME');
     // Check for CREATE_GUILD_EXPRESSIONS or MANAGE_EMOJIS_AND_STICKERS (v14 uses either)
     if (
-      !me.permissions.any([
-        Permissions.FLAGS.CREATE_GUILD_EXPRESSIONS,
-        Permissions.FLAGS.MANAGE_EMOJIS_AND_STICKERS,
-      ])
+      !me.permissions.any([Permissions.FLAGS.CREATE_GUILD_EXPRESSIONS, Permissions.FLAGS.MANAGE_EMOJIS_AND_STICKERS])
     ) {
       throw new Error('MISSING_MANAGE_EMOJIS_AND_STICKERS_PERMISSION', this.guild);
     }

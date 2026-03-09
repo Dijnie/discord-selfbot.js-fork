@@ -1,8 +1,8 @@
 'use strict';
 
 const { Collection } = require('@discordjs/collection');
-const { Events } = require('../util/Constants');
 const MessageComponentInteraction = require('./MessageComponentInteraction');
+const { Events } = require('../util/Constants');
 
 /**
  * Represents a MENTIONABLE_SELECT select menu interaction.

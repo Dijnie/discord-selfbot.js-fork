@@ -482,11 +482,7 @@ class MessageManager extends CachedManager {
     if (limit) query.limit = limit;
     if (after) query.after = after;
 
-    const voters = await this.client.api
-      .channels(this.channel.id)
-      .polls(messageId)
-      .answers(answerId)
-      .get({ query });
+    const voters = await this.client.api.channels(this.channel.id).polls(messageId).answers(answerId).get({ query });
 
     return voters.users.reduce((acc, user) => acc.set(user.id, this.client.users._add(user, false)), new Collection());
   }

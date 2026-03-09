@@ -278,7 +278,9 @@ class RoleManager extends CachedManager {
     // Support legacy (data, reason) signature
     const resolvedReason = options?.reason ?? reason;
 
-    if (typeof options.position === 'number') await this.setPosition(role, options.position, { reason: resolvedReason });
+    if (typeof options.position === 'number') {
+      await this.setPosition(role, options.position, { reason: resolvedReason });
+    }
 
     let icon = options.icon;
     if (icon) {

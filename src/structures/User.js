@@ -3,7 +3,6 @@
 const Base = require('./Base');
 const VoiceState = require('./VoiceState');
 const TextBasedChannel = require('./interfaces/TextBasedChannel');
-const { Error } = require('../errors');
 const { RelationshipTypes } = require('../util/Constants');
 const SnowflakeUtil = require('../util/SnowflakeUtil');
 const UserFlags = require('../util/UserFlags');

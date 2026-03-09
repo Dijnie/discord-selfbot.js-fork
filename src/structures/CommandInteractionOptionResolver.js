@@ -150,7 +150,12 @@ class CommandInteractionOptionResolver {
     const channel = option?.channel ?? null;
 
     if (channel && channelTypes.length > 0 && !channelTypes.includes(channel.type)) {
-      throw new TypeError('COMMAND_INTERACTION_OPTION_INVALID_CHANNEL_TYPE', name, channel.type, channelTypes.join(', '));
+      throw new TypeError(
+        'COMMAND_INTERACTION_OPTION_INVALID_CHANNEL_TYPE',
+        name,
+        channel.type,
+        channelTypes.join(', '),
+      );
     }
 
     return channel;

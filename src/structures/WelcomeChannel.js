@@ -54,7 +54,8 @@ class WelcomeChannel extends Base {
    */
   get emoji() {
     return (
-      (this._emoji.id && (this.guild.emojis?.cache.get(this._emoji.id) ?? this.client.emojis.cache.get(this._emoji.id))) ??
+      (this._emoji.id &&
+        (this.guild.emojis?.cache.get(this._emoji.id) ?? this.client.emojis.cache.get(this._emoji.id))) ??
       new Emoji(this.client, this._emoji)
     );
   }

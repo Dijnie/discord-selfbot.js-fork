@@ -794,8 +794,7 @@ class Message extends Base {
     // The auto moderation action message author is the reference message author
     return (
       (this.type !== 'AUTO_MODERATION_ACTION' && this.author.id === this.client.user.id) ||
-      (permissions.has(Permissions.FLAGS.MANAGE_MESSAGES, false) &&
-        !this.guild.members.me.isCommunicationDisabled())
+      (permissions.has(Permissions.FLAGS.MANAGE_MESSAGES, false) && !this.guild.members.me.isCommunicationDisabled())
     );
   }
 
