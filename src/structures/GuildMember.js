@@ -101,10 +101,6 @@ class GuildMember extends Base {
     }
 
     if ('joined_at' in data) {
-      /**
-       * The timestamp the member joined the guild at
-       * @type {?number}
-       */
       this.joinedTimestamp = data.joined_at && new Date(data.joined_at).getTime();
     } else {
       this.joinedTimestamp ??= null;

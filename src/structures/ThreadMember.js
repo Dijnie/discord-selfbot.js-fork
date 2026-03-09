@@ -42,10 +42,6 @@ class ThreadMember extends Base {
     if ('join_timestamp' in data) this.joinedTimestamp = Date.parse(data.join_timestamp);
 
     if ('flags' in data) {
-      /**
-       * The flags for this thread member
-       * @type {ThreadMemberFlags}
-       */
       this.flags = new ThreadMemberFlags(data.flags).freeze();
     }
 
