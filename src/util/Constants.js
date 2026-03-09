@@ -477,6 +477,9 @@ exports.Events = {
   MESSAGE_POLL_VOTE_ADD: 'messagePollVoteAdd',
   MESSAGE_POLL_VOTE_REMOVE: 'messagePollVoteRemove',
   VOICE_CHANNEL_EFFECT_SEND: 'voiceChannelEffectSend',
+  GUILD_SOUNDBOARD_SOUND_CREATE: 'guildSoundboardSoundCreate',
+  GUILD_SOUNDBOARD_SOUND_UPDATE: 'guildSoundboardSoundUpdate',
+  GUILD_SOUNDBOARD_SOUND_DELETE: 'guildSoundboardSoundDelete',
   // Djs v12
   VOICE_BROADCAST_SUBSCRIBE: 'subscribe',
   VOICE_BROADCAST_UNSUBSCRIBE: 'unsubscribe',
@@ -1718,6 +1721,7 @@ exports.MessageComponentTypes = createEnum([
   null,
   null,
   'CONTAINER',
+  'LABEL',
 ]);
 
 /**
@@ -1830,6 +1834,65 @@ exports.GuildScheduledEventStatuses = createEnum([null, 'SCHEDULED', 'ACTIVE', '
  * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event#guild-scheduled-event-object-guild-scheduled-event-entity-types}
  */
 exports.GuildScheduledEventEntityTypes = createEnum([null, 'STAGE_INSTANCE', 'VOICE', 'EXTERNAL']);
+
+/**
+ * The mode of guild onboarding:
+ * * ONBOARDING_DEFAULT
+ * * ONBOARDING_ADVANCED
+ * @typedef {string} GuildOnboardingMode
+ */
+exports.GuildOnboardingModes = createEnum(['ONBOARDING_DEFAULT', 'ONBOARDING_ADVANCED']);
+
+/**
+ * The type of a guild onboarding prompt:
+ * * MULTIPLE_CHOICE
+ * * DROPDOWN
+ * @typedef {string} GuildOnboardingPromptType
+ */
+exports.GuildOnboardingPromptTypes = createEnum(['MULTIPLE_CHOICE', 'DROPDOWN']);
+
+/**
+ * The type of an entitlement:
+ * * PURCHASE
+ * * PREMIUM_SUBSCRIPTION
+ * * DEVELOPER_GIFT
+ * * TEST_MODE_PURCHASE
+ * * FREE_PURCHASE
+ * * USER_GIFT
+ * * PREMIUM_PURCHASE
+ * * APPLICATION_SUBSCRIPTION
+ * @typedef {string} EntitlementType
+ */
+exports.EntitlementTypes = createEnum([
+  null,
+  'PURCHASE',
+  'PREMIUM_SUBSCRIPTION',
+  'DEVELOPER_GIFT',
+  'TEST_MODE_PURCHASE',
+  'FREE_PURCHASE',
+  'USER_GIFT',
+  'PREMIUM_PURCHASE',
+  'APPLICATION_SUBSCRIPTION',
+]);
+
+/**
+ * The type of an SKU:
+ * * DURABLE
+ * * CONSUMABLE
+ * * SUBSCRIPTION
+ * * SUBSCRIPTION_GROUP
+ * @typedef {string} SKUType
+ */
+exports.SKUTypes = createEnum([null, null, 'DURABLE', 'CONSUMABLE', null, 'SUBSCRIPTION', 'SUBSCRIPTION_GROUP']);
+
+/**
+ * The status of a subscription:
+ * * ACTIVE
+ * * ENDING
+ * * INACTIVE
+ * @typedef {string} SubscriptionStatus
+ */
+exports.SubscriptionStatuses = createEnum(['ACTIVE', 'ENDING', 'INACTIVE']);
 /* eslint-enable max-len */
 
 /**

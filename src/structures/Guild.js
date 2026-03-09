@@ -18,6 +18,7 @@ const GuildInviteManager = require('../managers/GuildInviteManager');
 const GuildMemberManager = require('../managers/GuildMemberManager');
 const GuildScheduledEventManager = require('../managers/GuildScheduledEventManager');
 const GuildSettingManager = require('../managers/GuildSettingManager');
+const GuildSoundboardSoundManager = require('../managers/GuildSoundboardSoundManager');
 const GuildStickerManager = require('../managers/GuildStickerManager');
 const PresenceManager = require('../managers/PresenceManager');
 const RoleManager = require('../managers/RoleManager');
@@ -574,13 +575,19 @@ class Guild extends AnonymousGuild {
       this.incidentsData ??= null;
     }
 
-    // TODO: add GuildSoundboardSoundManager when available in selfbot
-    // if (data.soundboard_sounds) {
-    //   this.soundboardSounds.cache.clear();
-    //   for (const soundboardSound of data.soundboard_sounds) {
-    //     this.soundboardSounds._add(soundboardSound);
-    //   }
-    // }
+    if (!this.soundboardSounds) {
+      /**
+       * A manager of the soundboard sounds belonging to this guild
+       * @type {GuildSoundboardSoundManager}
+       */
+      this.soundboardSounds = new GuildSoundboardSoundManager(this);
+    }
+    if (data.soundboard_sounds) {
+      this.soundboardSounds.cache.clear();
+      for (const soundboardSound of data.soundboard_sounds) {
+        this.soundboardSounds._add(soundboardSound);
+      }
+    }
   }
 
   /**
