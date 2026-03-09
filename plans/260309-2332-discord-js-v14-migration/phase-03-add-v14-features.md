@@ -37,10 +37,12 @@ Add new discord.js v14.16.3 structures, managers, and actions that don't exist i
 - [ ] `src/managers/EntitlementManager.js` — skipped (requires bot application context)
 - [ ] `src/managers/SubscriptionManager.js` — skipped (requires bot application context)
 
-### 3D: Invite Refactor (3 files) — DEFERRED
-- [ ] `src/structures/BaseInvite.js` — selfbot already has Invite.js, refactor deferred
-- [ ] `src/structures/GuildInvite.js` — deferred
-- [ ] `src/structures/GroupDMInvite.js` — deferred
+### 3D: Invite Refactor (3 files) — DONE
+- [x] `src/structures/BaseInvite.js` — shared base class (v14 compatible)
+- [x] `src/structures/GuildInvite.js` — guild invites (extends BaseInvite)
+- [x] `src/structures/GroupDMInvite.js` — group DM invites (extends BaseInvite)
+- [x] `src/structures/Invite.js` — backward-compat alias (extends GuildInvite)
+- [x] `src/structures/GroupDMChannel.js` — updated to use GroupDMInvite
 
 ### 3E: Misc Structures — DONE
 - [x] `src/structures/LabelComponent.js` — new component type (type 18)
@@ -74,7 +76,7 @@ Add new discord.js v14.16.3 structures, managers, and actions that don't exist i
 - Pre-existing lint errors: 227 (unchanged from before)
 
 ## Deferred Items
-- **Invite refactor** (3D): Selfbot has a working Invite.js. The v14 split into BaseInvite/GuildInvite/GroupDMInvite is a refactor that could break existing code. Defer to Phase 4.
+- ~~**Invite refactor** (3D): Done — BaseInvite/GuildInvite/GroupDMInvite hierarchy with Invite as backward-compat alias.~~
 - **EntitlementManager/SubscriptionManager**: Require `client.application` which is bot-specific. Structures are available for data parsing.
 - **DMMessageManager/GuildMessageManager**: Thin subclasses with low value-add for selfbot.
 - **GuildAuditLogsEntry**: Already available as `GuildAuditLogs.Entry` in selfbot.
