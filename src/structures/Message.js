@@ -4,6 +4,7 @@ const process = require('node:process');
 const { Collection } = require('@discordjs/collection');
 const Base = require('./Base');
 const BaseMessageComponent = require('./BaseMessageComponent');
+const InteractionCollector = require('./InteractionCollector');
 const MessageAttachment = require('./MessageAttachment');
 const Embed = require('./MessageEmbed');
 const Mentions = require('./MessageMentions');
@@ -20,6 +21,8 @@ const {
   SystemMessageTypes,
   MessageComponentTypes,
   MessageReferenceTypes,
+  MaxBulkDeletableMessageAge,
+  UndeletableMessageTypes,
 } = require('../util/Constants');
 const MessageFlags = require('../util/MessageFlags');
 const Permissions = require('../util/Permissions');
@@ -201,8 +204,45 @@ class Message extends Base {
       this.stickers = new Collection(this.stickers);
     }
 
+    if ('role_subscription_data' in data) {
+      /**
+       * Role subscription data found on role subscription purchase messages.
+       *
+       * @typedef {Object} RoleSubscriptionData
+       * @property {Snowflake} roleSubscriptionListingId The id of the SKU and listing the user is subscribed to
+       * @property {string} tierName The name of the tier the user is subscribed to
+       * @property {number} totalMonthsSubscribed The total number of months the user has been subscribed for
+       * @property {boolean} isRenewal Whether this notification is a renewal
+       */
+
+      /**
+       * The data of the role subscription purchase or renewal.
+       * <info>This is present on role subscription purchase messages.</info>
+       * @type {?RoleSubscriptionData}
+       */
+      this.roleSubscriptionData = {
+        roleSubscriptionListingId: data.role_subscription_data.role_subscription_listing_id,
+        tierName: data.role_subscription_data.tier_name,
+        totalMonthsSubscribed: data.role_subscription_data.total_months_subscribed,
+        isRenewal: data.role_subscription_data.is_renewal,
+      };
+    } else {
+      this.roleSubscriptionData ??= null;
+    }
+
+    if ('resolved' in data) {
+      /**
+       * Resolved data from auto-populated select menus.
+       * @type {?Object}
+       */
+      // TODO: Use proper CommandInteractionResolvedData transform if available
+      this.resolved = data.resolved;
+    } else {
+      this.resolved ??= null;
+    }
+
     // Discord sends null if the message has not been edited
-    if (data.edited_timestamp) {
+    if ('edited_timestamp' in data) {
       /**
        * The timestamp the message was last edited at (if applicable)
        * @type {?number}
@@ -262,11 +302,16 @@ class Message extends Base {
     }
 
     if (data.poll) {
-      /**
-       * The poll that was sent with the message
-       * @type {?Poll}
-       */
-      this.poll = new Poll(this.client, data.poll, this);
+      if (this.poll) {
+        // Update existing poll with new data (v14 improvement)
+        this.poll._patch(data.poll);
+      } else {
+        /**
+         * The poll that was sent with the message
+         * @type {?Poll}
+         */
+        this.poll = new Poll(this.client, data.poll, this);
+      }
     } else {
       this.poll ??= null;
     }
@@ -382,6 +427,41 @@ class Message extends Base {
       };
     } else {
       this.interaction ??= null;
+    }
+
+    if (data.interaction_metadata) {
+      /**
+       * Partial data of the interaction that a message is a result of (v14+ field).
+       * More detailed than `interaction` — includes authorizingIntegrationOwners,
+       * originalResponseMessageId, interactedMessageId, and triggeringInteractionMetadata.
+       *
+       * @typedef {Object} MessageInteractionMetadata
+       * @property {Snowflake} id The interaction's id
+       * @property {InteractionType} type The type of the interaction
+       * @property {User} user The user that invoked the interaction
+       * @property {Object} authorizingIntegrationOwners Mapping of integration types to user or guild ids
+       * @property {?Snowflake} originalResponseMessageId Id of the original response message (follow-up only)
+       * @property {?Snowflake} interactedMessageId Id of the message that contained the interactive component
+       * @property {?MessageInteractionMetadata} triggeringInteractionMetadata Metadata for modal trigger interaction
+       */
+
+      /**
+       * Partial data of the interaction that this message is a result of.
+       * Present on application command responses and component interactions.
+       * @type {?MessageInteractionMetadata}
+       */
+      // TODO: Use _transformAPIMessageInteractionMetadata from Transformers if added to selfbot
+      this.interactionMetadata = {
+        id: data.interaction_metadata.id,
+        type: InteractionTypes[data.interaction_metadata.type] ?? data.interaction_metadata.type,
+        user: this.client.users._add(data.interaction_metadata.user),
+        authorizingIntegrationOwners: data.interaction_metadata.authorizing_integration_owners,
+        originalResponseMessageId: data.interaction_metadata.original_response_message_id ?? null,
+        interactedMessageId: data.interaction_metadata.interacted_message_id ?? null,
+        triggeringInteractionMetadata: data.interaction_metadata.triggering_interaction_metadata ?? null,
+      };
+    } else {
+      this.interactionMetadata ??= null;
     }
 
     if (data.message_snapshots) {
@@ -601,6 +681,66 @@ class Message extends Base {
   }
 
   /**
+   * @typedef {CollectorOptions} MessageComponentCollectorOptions
+   * @property {MessageComponentType} [componentType] The type of component to listen for
+   * @property {number} [max] The maximum total amount of interactions to collect
+   * @property {number} [maxComponents] The maximum number of components to collect
+   * @property {number} [maxUsers] The maximum number of users to interact
+   */
+
+  /**
+   * Creates a message component interaction collector.
+   * @param {MessageComponentCollectorOptions} [options={}] Options to send to the collector
+   * @returns {InteractionCollector}
+   * @example
+   * // Create a message component interaction collector
+   * const filter = (interaction) => interaction.customId === 'button' && interaction.user.id === 'someId';
+   * const collector = message.createMessageComponentCollector({ filter, time: 15_000 });
+   * collector.on('collect', i => console.log(`Collected ${i.customId}`));
+   * collector.on('end', collected => console.log(`Collected ${collected.size} items`));
+   */
+  createMessageComponentCollector(options = {}) {
+    return new InteractionCollector(this.client, {
+      ...options,
+      interactionType: InteractionTypes.MESSAGE_COMPONENT,
+      message: this,
+    });
+  }
+
+  /**
+   * @typedef {Object} AwaitMessageComponentOptions
+   * @property {CollectorFilter} [filter] The filter applied to this collector
+   * @property {number} [time] Time to wait for an interaction before rejecting
+   * @property {MessageComponentType} [componentType] The type of component interaction to collect
+   * @property {number} [idle] Time to wait without another interaction before ending the collector
+   * @property {boolean} [dispose] Whether to remove the interaction after collecting
+   */
+
+  /**
+   * Collects a single component interaction that passes the filter.
+   * The Promise will reject if the time expires.
+   * @param {AwaitMessageComponentOptions} [options={}] Options to pass to the internal collector
+   * @returns {Promise<MessageComponentInteraction>}
+   * @example
+   * // Collect a message component interaction
+   * const filter = (interaction) => interaction.customId === 'button' && interaction.user.id === 'someId';
+   * message.awaitMessageComponent({ filter, time: 15_000 })
+   *   .then(interaction => console.log(`${interaction.customId} was clicked!`))
+   *   .catch(console.error);
+   */
+  async awaitMessageComponent(options = {}) {
+    const _options = { ...options, max: 1 };
+    return new Promise((resolve, reject) => {
+      const collector = this.createMessageComponentCollector(_options);
+      collector.once('end', (interactions, reason) => {
+        const interaction = interactions.first();
+        if (interaction) resolve(interaction);
+        else reject(new Error('INTERACTION_COLLECTOR_ERROR', reason));
+      });
+    });
+  }
+
+  /**
    * Whether the message is editable by the client user
    * @type {boolean}
    * @readonly
@@ -635,6 +775,9 @@ class Message extends Base {
     if (deletedMessages.has(this)) {
       return false;
     }
+
+    if (UndeletableMessageTypes.includes(this.type)) return false;
+
     if (!this.guild) {
       return this.author.id === this.client.user.id;
     }
@@ -648,10 +791,10 @@ class Message extends Base {
     // This flag allows deleting even if timed out
     if (permissions.has(Permissions.FLAGS.ADMINISTRATOR, false)) return true;
 
-    return Boolean(
-      this.author.id === this.client.user.id ||
-        (permissions.has(Permissions.FLAGS.MANAGE_MESSAGES, false) &&
-          this.guild.members.me.communicationDisabledUntilTimestamp < Date.now()),
+    // The auto moderation action message author is the reference message author
+    return (
+      (this.type !== 'AUTO_MODERATION_ACTION' && this.author.id === this.client.user.id) ||
+      (permissions.has(Permissions.FLAGS.MANAGE_MESSAGES, false) && !this.guild.members.me.isCommunicationDisabled())
     );
   }
 
@@ -664,7 +807,13 @@ class Message extends Base {
    * channel.bulkDelete(messages.filter(message => message.bulkDeletable));
    */
   get bulkDeletable() {
-    return false;
+    return (
+      (this.inGuild() &&
+        Date.now() - this.createdTimestamp < MaxBulkDeletableMessageAge &&
+        this.deletable &&
+        this.channel?.permissionsFor(this.client.user)?.has(Permissions.FLAGS.MANAGE_MESSAGES, false)) ??
+      false
+    );
   }
 
   /**
@@ -674,13 +823,15 @@ class Message extends Base {
    */
   get pinnable() {
     const { channel } = this;
-    return Boolean(
-      !this.system &&
-        !deletedMessages.has(this) &&
-        (!this.guild ||
-          (channel?.viewable &&
-            channel?.permissionsFor(this.client.user)?.has(Permissions.FLAGS.MANAGE_MESSAGES, false))),
-    );
+
+    if (this.system) return false;
+    if (!this.guild) return true;
+    if (!channel || channel.isVoiceBased?.() || !channel.viewable) return false;
+
+    const permissions = channel.permissionsFor(this.client.user);
+    if (!permissions) return false;
+
+    return permissions.has(Permissions.FLAGS.READ_MESSAGE_HISTORY | Permissions.FLAGS.MANAGE_MESSAGES);
   }
 
   /**
@@ -693,8 +844,7 @@ class Message extends Base {
     if (!messageId) throw new Error('MESSAGE_REFERENCE_MISSING');
     const channel = this.client.channels.resolve(channelId);
     if (!channel) throw new Error('GUILD_CHANNEL_RESOLVE');
-    const message = await channel.messages.fetch(messageId);
-    return message;
+    return channel.messages.fetch(messageId);
   }
 
   /**
@@ -1038,8 +1188,8 @@ class Message extends Base {
     if (equal && rawData) {
       equal =
         this.mentions.everyone === message.mentions.everyone &&
-        this.createdTimestamp === new Date(rawData.timestamp).getTime() &&
-        this.editedTimestamp === new Date(rawData.edited_timestamp).getTime();
+        this.createdTimestamp === Date.parse(rawData.timestamp) &&
+        this.editedTimestamp === Date.parse(rawData.edited_timestamp);
     }
 
     return equal;
@@ -1224,7 +1374,7 @@ class Message extends Base {
    * @param {Object} [elements={}] Metadata
    * @returns {Promise<{ report_id: Snowflake }>}
    * @example
-   * // GET https://discord.com/api/v9/reporting/menu/message?variant=4
+   * // GET https://discord.com/api/v10/reporting/menu/message?variant=4
    * // Report Category
    * // - <hidden>MESSAGE_WELCOME (3)</hidden>
    * // - Something else (28)

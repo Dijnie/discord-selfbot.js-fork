@@ -2,6 +2,7 @@
 
 const Base = require('./Base');
 const { Emoji } = require('./Emoji');
+const PollAnswerVoterManager = require('../managers/PollAnswerVoterManager');
 
 /**
  * Represents an answer to a {@link Poll}
@@ -38,6 +39,12 @@ class PollAnswer extends Base {
      * @private
      */
     Object.defineProperty(this, '_emoji', { value: data.poll_media.emoji ?? null });
+
+    /**
+     * A manager of the users that voted for this answer
+     * @type {PollAnswerVoterManager}
+     */
+    this.voters = new PollAnswerVoterManager(this);
 
     this._patch(data);
   }

@@ -477,6 +477,9 @@ exports.Events = {
   MESSAGE_POLL_VOTE_ADD: 'messagePollVoteAdd',
   MESSAGE_POLL_VOTE_REMOVE: 'messagePollVoteRemove',
   VOICE_CHANNEL_EFFECT_SEND: 'voiceChannelEffectSend',
+  GUILD_SOUNDBOARD_SOUND_CREATE: 'guildSoundboardSoundCreate',
+  GUILD_SOUNDBOARD_SOUND_UPDATE: 'guildSoundboardSoundUpdate',
+  GUILD_SOUNDBOARD_SOUND_DELETE: 'guildSoundboardSoundDelete',
   // Djs v12
   VOICE_BROADCAST_SUBSCRIBE: 'subscribe',
   VOICE_BROADCAST_UNSUBSCRIBE: 'unsubscribe',
@@ -826,6 +829,7 @@ exports.SweeperKeys = [
   'autoModerationRules',
   'bans',
   'emojis',
+  'entitlements',
   'invites',
   'guildMembers',
   'messages',
@@ -850,6 +854,35 @@ exports.SweeperKeys = [
 exports.SystemMessageTypes = exports.MessageTypes.filter(
   type => type && !['DEFAULT', 'REPLY', 'APPLICATION_COMMAND', 'CONTEXT_MENU_COMMAND'].includes(type),
 );
+
+/**
+ * The types of messages that are not `System`. The available types are:
+ * * DEFAULT
+ * * REPLY
+ * * APPLICATION_COMMAND
+ * * CONTEXT_MENU_COMMAND
+ * @typedef {string} NonSystemMessageType
+ */
+exports.NonSystemMessageTypes = ['DEFAULT', 'REPLY', 'APPLICATION_COMMAND', 'CONTEXT_MENU_COMMAND'];
+
+/**
+ * The types of messages that cannot be deleted. The available types are:
+ * * RECIPIENT_ADD
+ * * RECIPIENT_REMOVE
+ * * CALL
+ * * CHANNEL_NAME_CHANGE
+ * * CHANNEL_ICON_CHANGE
+ * * THREAD_STARTER_MESSAGE
+ * @typedef {string} UndeletableMessageType
+ */
+exports.UndeletableMessageTypes = [
+  'RECIPIENT_ADD',
+  'RECIPIENT_REMOVE',
+  'CALL',
+  'CHANNEL_NAME_CHANGE',
+  'CHANNEL_ICON_CHANGE',
+  'THREAD_STARTER_MESSAGE',
+];
 
 /**
  * <info>Bots cannot set a `CUSTOM` activity type, it is only for custom statuses received from users</info>
@@ -940,6 +973,7 @@ exports.ChannelTypes = createEnum([
  */
 exports.TextBasedChannelTypes = [
   'DM',
+  'GROUP_DM',
   'GUILD_TEXT',
   'GUILD_NEWS',
   'GUILD_NEWS_THREAD',
@@ -948,6 +982,41 @@ exports.TextBasedChannelTypes = [
   'GUILD_VOICE',
   'GUILD_STAGE_VOICE',
 ];
+
+/**
+ * The guild channels that are text-based:
+ * * GUILD_TEXT
+ * * GUILD_NEWS
+ * * GUILD_NEWS_THREAD
+ * * GUILD_PUBLIC_THREAD
+ * * GUILD_PRIVATE_THREAD
+ * * GUILD_VOICE
+ * * GUILD_STAGE_VOICE
+ * @typedef {string} GuildTextBasedChannelTypes
+ */
+exports.GuildTextBasedChannelTypes = [
+  'GUILD_TEXT',
+  'GUILD_NEWS',
+  'GUILD_NEWS_THREAD',
+  'GUILD_PUBLIC_THREAD',
+  'GUILD_PRIVATE_THREAD',
+  'GUILD_VOICE',
+  'GUILD_STAGE_VOICE',
+];
+
+/**
+ * The types of channels that are text-based and can have messages sent into. The available types are:
+ * * DM
+ * * GUILD_TEXT
+ * * GUILD_NEWS
+ * * GUILD_NEWS_THREAD
+ * * GUILD_PUBLIC_THREAD
+ * * GUILD_PRIVATE_THREAD
+ * * GUILD_VOICE
+ * * GUILD_STAGE_VOICE
+ * @typedef {string} SendableChannels
+ */
+exports.SendableChannels = [...exports.GuildTextBasedChannelTypes, 'DM'];
 
 /**
  * The types of channels that are threads. The available types are:
@@ -1057,6 +1126,20 @@ exports.HolographicStyles = {
   PRIMARY: 11_127_295,
   SECONDARY: 16_759_788,
   TERTIARY: 16_761_760,
+};
+
+/**
+ * Holographic color values for role styling (v14 compat alias with PascalCase keys).
+ * When using `tertiaryColor`, the API enforces these specific values for holographic effect.
+ * * Primary: 11127295 (0xA9FFFF)
+ * * Secondary: 16759788 (0xFFCCCC)
+ * * Tertiary: 16761760 (0xFFE0A0)
+ * @typedef {Object<string, number>} HolographicStyle
+ */
+exports.HolographicStyle = {
+  Primary: 11_127_295,
+  Secondary: 16_759_788,
+  Tertiary: 16_761_760,
 };
 
 /**
@@ -1435,6 +1518,21 @@ exports.StickerTypes = createEnum([null, 'STANDARD', 'GUILD']);
 exports.StickerFormatTypes = createEnum([null, 'PNG', 'APNG', 'LOTTIE', 'GIF']);
 
 /**
+ * A mapping between sticker format types and their respective image file extensions.
+ * * PNG -> 'png'
+ * * APNG -> 'png'
+ * * LOTTIE -> 'json'
+ * * GIF -> 'gif'
+ * @typedef {Object} StickerFormatExtensionMap
+ */
+exports.StickerFormatExtensionMap = {
+  PNG: 'png',
+  APNG: 'png',
+  LOTTIE: 'json',
+  GIF: 'gif',
+};
+
+/**
  * An overwrite type:
  * * role
  * * member
@@ -1638,6 +1736,7 @@ exports.MessageComponentTypes = createEnum([
   null,
   null,
   'CONTAINER',
+  'LABEL',
 ]);
 
 /**
@@ -1659,6 +1758,18 @@ exports.SelectMenuComponentTypes = createEnum([
   'MENTIONABLE_SELECT',
   'CHANNEL_SELECT',
 ]);
+
+/**
+ * The types of select menus. The available types are:
+ * * STRING_MENU
+ * * USER_SELECT
+ * * ROLE_SELECT
+ * * MENTIONABLE_SELECT
+ * * CHANNEL_SELECT
+ * @typedef {string[]} SelectMenuTypes
+ * @see {@link https://discord.com/developers/docs/interactions/message-components#component-object-component-types}
+ */
+exports.SelectMenuTypes = ['STRING_MENU', 'USER_SELECT', 'ROLE_SELECT', 'MENTIONABLE_SELECT', 'CHANNEL_SELECT'];
 
 /**
  * The style of a message button
@@ -1750,6 +1861,65 @@ exports.GuildScheduledEventStatuses = createEnum([null, 'SCHEDULED', 'ACTIVE', '
  * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event#guild-scheduled-event-object-guild-scheduled-event-entity-types}
  */
 exports.GuildScheduledEventEntityTypes = createEnum([null, 'STAGE_INSTANCE', 'VOICE', 'EXTERNAL']);
+
+/**
+ * The mode of guild onboarding:
+ * * ONBOARDING_DEFAULT
+ * * ONBOARDING_ADVANCED
+ * @typedef {string} GuildOnboardingMode
+ */
+exports.GuildOnboardingModes = createEnum(['ONBOARDING_DEFAULT', 'ONBOARDING_ADVANCED']);
+
+/**
+ * The type of a guild onboarding prompt:
+ * * MULTIPLE_CHOICE
+ * * DROPDOWN
+ * @typedef {string} GuildOnboardingPromptType
+ */
+exports.GuildOnboardingPromptTypes = createEnum(['MULTIPLE_CHOICE', 'DROPDOWN']);
+
+/**
+ * The type of an entitlement:
+ * * PURCHASE
+ * * PREMIUM_SUBSCRIPTION
+ * * DEVELOPER_GIFT
+ * * TEST_MODE_PURCHASE
+ * * FREE_PURCHASE
+ * * USER_GIFT
+ * * PREMIUM_PURCHASE
+ * * APPLICATION_SUBSCRIPTION
+ * @typedef {string} EntitlementType
+ */
+exports.EntitlementTypes = createEnum([
+  null,
+  'PURCHASE',
+  'PREMIUM_SUBSCRIPTION',
+  'DEVELOPER_GIFT',
+  'TEST_MODE_PURCHASE',
+  'FREE_PURCHASE',
+  'USER_GIFT',
+  'PREMIUM_PURCHASE',
+  'APPLICATION_SUBSCRIPTION',
+]);
+
+/**
+ * The type of an SKU:
+ * * DURABLE
+ * * CONSUMABLE
+ * * SUBSCRIPTION
+ * * SUBSCRIPTION_GROUP
+ * @typedef {string} SKUType
+ */
+exports.SKUTypes = createEnum([null, null, 'DURABLE', 'CONSUMABLE', null, 'SUBSCRIPTION', 'SUBSCRIPTION_GROUP']);
+
+/**
+ * The status of a subscription:
+ * * ACTIVE
+ * * ENDING
+ * * INACTIVE
+ * @typedef {string} SubscriptionStatus
+ */
+exports.SubscriptionStatuses = createEnum(['ACTIVE', 'ENDING', 'INACTIVE']);
 /* eslint-enable max-len */
 
 /**
@@ -1866,6 +2036,8 @@ function createEnum(keys) {
  * The value set for a guilds default message notifications.
  * @property {Endpoints} Endpoints Object containing functions that return certain endpoints on the API.
  * @property {Events} Events The types of events emitted by the Client.
+ * @property {GuildTextBasedChannelTypes} GuildTextBasedChannelTypes The types of guild channels that are text-based.
+ * @property {SendableChannels} SendableChannels The types of channels that messages can be sent into.
  * @property {Object<ExplicitContentFilterLevel, number>} ExplicitContentFilterLevels
  * The value set for the explicit content filter levels for a guild.
  * @property {Object<GuildScheduledEventEntityType, number>} GuildScheduledEventEntityTypes
@@ -1885,6 +2057,8 @@ function createEnum(keys) {
  * @property {Object<MessageButtonStyle, number>} MessageButtonStyles The style of a message button.
  * @property {Object<MessageComponentType, number>} MessageComponentTypes The type of a message component.
  * @property {MessageType[]} MessageTypes The type of a {@link Message} object.
+ * @property {NonSystemMessageType[]} NonSystemMessageTypes The types of messages that are not system types.
+ * @property {UndeletableMessageType[]} UndeletableMessageTypes The types of messages that cannot be deleted.
  * @property {Object<MFALevel, number>} MFALevels The required MFA level for a guild.
  * @property {Object<NSFWLevel, number>} NSFWLevels NSFW level of a guild.
  * @property {Opcodes} Opcodes The types of Opcodes sent to the Gateway.
@@ -1897,6 +2071,7 @@ function createEnum(keys) {
  * @property {Status} Status The available statuses of the client.
  * @property {Object<SelectMenuComponentType, number>} SelectMenuComponentTypes The type of any select menu.
  * @property {Object<StickerFormatType, number>} StickerFormatTypes The value set for a stickers format type.
+ * @property {StickerFormatExtensionMap} StickerFormatExtensionMap A mapping between sticker formats and image extensions.
  * @property {Object<StickerType, number>} StickerTypes The value set for a stickers type.
  * @property {SweeperKey[]} SweeperKeys The name of an item to be swept in Sweepers.
  * @property {SystemMessageType[]} SystemMessageTypes The types of messages that are `System`.

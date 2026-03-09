@@ -740,6 +740,8 @@ export class BitField<S extends string, N extends number | bigint = number> {
   public valueOf(): N;
   public [Symbol.iterator](): IterableIterator<S>;
   public static FLAGS: Record<string, number | bigint>;
+  /** V14 alias for {@link BitField.FLAGS} */
+  public static Flags: Record<string, number | bigint>;
   public static resolve(bit?: BitFieldResolvable<string, number | bigint>): number | bigint;
 }
 
@@ -1286,7 +1288,16 @@ export interface CollectorEventTypes<K, V, F extends unknown[] = []> {
   end: [collected: Collection<K, V>, reason: string];
 }
 
-export type ChannelFlagsString = 'PINNED' | 'REQUIRE_TAG';
+export type ChannelFlagsString =
+  | 'GUILD_FEED_REMOVED'
+  | 'PINNED'
+  | 'ACTIVE_CHANNELS_REMOVED'
+  | 'REQUIRE_TAG'
+  | 'IS_SPAM'
+  | 'IS_GUILD_RESOURCE_CHANNEL'
+  | 'CLYDE_AI'
+  | 'IS_SCHEDULED_FOR_DELETION'
+  | 'HIDE_MEDIA_DOWNLOAD_OPTIONS';
 export class ChannelFlags extends BitField<ChannelFlagsString> {
   public static FLAGS: Record<ChannelFlagsString, number>;
   public static resolve(bit?: BitFieldResolvable<ChannelFlagsString, number>): number;
@@ -2081,7 +2092,14 @@ export class Interaction<Cached extends CacheType = CacheType> extends Base {
   public isMessageContextMenu(): this is MessageContextMenuInteraction<Cached>;
   public isMessageComponent(): this is MessageComponentInteraction<Cached>;
   public isModalSubmit(): this is ModalSubmitInteraction<Cached>;
+  /** @deprecated Use {@link Interaction.isAnySelectMenu} or typed variants instead */
   public isSelectMenu(): this is SelectMenuInteraction<Cached>;
+  public isAnySelectMenu(): this is SelectMenuInteraction<Cached>;
+  public isStringSelectMenu(): this is StringSelectInteraction<Cached>;
+  public isUserSelectMenu(): this is UserSelectInteraction<Cached>;
+  public isRoleSelectMenu(): this is RoleSelectInteraction<Cached>;
+  public isMentionableSelectMenu(): this is MentionableSelectInteraction<Cached>;
+  public isChannelSelectMenu(): this is ChannelSelectInteraction<Cached>;
   public isRepliable(): this is this & InteractionResponseFields<Cached>;
 }
 
@@ -3113,6 +3131,13 @@ export class RoleFlags extends BitField<RoleFlagsString> {
 
 export type RoleFlagsString = 'IN_PROMPT';
 
+export class SKUFlags extends BitField<SKUFlagsString> {
+  public static FLAGS: Record<SKUFlagsString, number>;
+  public static resolve(bit?: BitFieldResolvable<SKUFlagsString, number>): number;
+}
+
+export type SKUFlagsString = 'AVAILABLE' | 'GUILD_SUBSCRIPTION' | 'USER_SUBSCRIPTION';
+
 export class Speaking extends BitField<SpeakingString> {
   public static FLAGS: Record<SpeakingString, number>;
   public static resolve(bit?: BitFieldResolvable<SpeakingString, number>): number;
@@ -3202,6 +3227,13 @@ export type SelectMenuInteraction<Cached extends CacheType = CacheType> =
   | MentionableSelectInteraction<Cached>
   | RoleSelectInteraction<Cached>
   | UserSelectInteraction<Cached>;
+
+// JS export name aliases (JS uses *SelectMenuInteraction, typings use *SelectInteraction)
+export { StringSelectInteraction as StringSelectMenuInteraction };
+export { UserSelectInteraction as UserSelectMenuInteraction };
+export { RoleSelectInteraction as RoleSelectMenuInteraction };
+export { MentionableSelectInteraction as MentionableSelectMenuInteraction };
+export { ChannelSelectInteraction as ChannelSelectMenuInteraction };
 
 export interface ShardEventTypes {
   spawn: [process: ChildProcess | Worker];
@@ -6931,7 +6963,14 @@ export type GuildMemberFlagsString =
   | 'DID_REJOIN'
   | 'COMPLETED_ONBOARDING'
   | 'BYPASSES_VERIFICATION'
-  | 'STARTED_ONBOARDING';
+  | 'STARTED_ONBOARDING'
+  | 'IS_GUEST'
+  | 'STARTED_HOME_ACTIONS'
+  | 'COMPLETED_HOME_ACTIONS'
+  | 'AUTOMOD_QUARANTINED_USERNAME_OR_GUILD_NICKNAME'
+  | 'AUTOMOD_QUARANTINED_BIO'
+  | 'DM_SETTINGS_UPSELL_ACKNOWLEDGED'
+  | 'AUTOMOD_QUARANTINED_GUILD_TAG';
 
 export type GuildMemberFlagsResolvable = BitFieldResolvable<GuildMemberFlagsString, number>;
 
@@ -7151,7 +7190,9 @@ export type IntentsString =
   | 'MESSAGE_CONTENT'
   | 'GUILD_SCHEDULED_EVENTS'
   | 'AUTO_MODERATION_CONFIGURATION'
-  | 'AUTO_MODERATION_EXECUTION';
+  | 'AUTO_MODERATION_EXECUTION'
+  | 'GUILD_MESSAGE_POLLS'
+  | 'DIRECT_MESSAGE_POLLS';
 
 export type GuildInvitableChannelResolvable =
   | TextChannel
@@ -7631,7 +7672,9 @@ export type PermissionString =
   | 'USE_CLYDE_AI'
   | 'SET_VOICE_CHANNEL_STATUS'
   | 'SEND_POLLS'
-  | 'USE_EXTERNAL_APPS';
+  | 'USE_EXTERNAL_APPS'
+  | 'PIN_MESSAGES'
+  | 'BYPASS_SLOWMODE';
 
 export type RecursiveArray<T> = ReadonlyArray<T | RecursiveArray<T>>;
 
@@ -8023,7 +8066,7 @@ export interface ThreadEditData {
   flags?: ChannelFlagsResolvable;
 }
 
-export type ThreadMemberFlagsString = '';
+export type ThreadMemberFlagsString = 'HAS_INTERACTED' | 'ALL_MESSAGES' | 'ONLY_MENTIONS' | 'NO_MESSAGES';
 
 export type ThreadMemberResolvable = ThreadMember | UserResolvable;
 

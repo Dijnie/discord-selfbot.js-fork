@@ -101,7 +101,9 @@ class BitField {
    */
   serialize(...hasParams) {
     const serialized = {};
-    for (const [flag, bit] of Object.entries(this.constructor.FLAGS)) serialized[flag] = this.has(bit, ...hasParams);
+    for (const [flag, bit] of Object.entries(this.constructor.FLAGS)) {
+      if (isNaN(flag)) serialized[flag] = this.has(bit, ...hasParams);
+    }
     return serialized;
   }
 
@@ -111,7 +113,7 @@ class BitField {
    * @returns {string[]}
    */
   toArray(...hasParams) {
-    return Object.keys(this.constructor.FLAGS).filter(bit => this.has(bit, ...hasParams));
+    return [...this[Symbol.iterator](...hasParams)];
   }
 
   toJSON() {
@@ -122,8 +124,10 @@ class BitField {
     return this.bitfield;
   }
 
-  *[Symbol.iterator]() {
-    yield* this.toArray();
+  *[Symbol.iterator](...hasParams) {
+    for (const bitName of Object.keys(this.constructor.FLAGS)) {
+      if (isNaN(bitName) && this.has(bitName, ...hasParams)) yield bitName;
+    }
   }
 
   /**
@@ -162,9 +166,37 @@ class BitField {
 BitField.FLAGS = {};
 
 /**
+ * Numeric bitfield flags (v14 alias for {@link BitField.FLAGS}).
+ * @type {Object}
+ * @abstract
+ */
+Object.defineProperty(BitField, 'Flags', {
+  get() {
+    return this.FLAGS;
+  },
+  set(value) {
+    this.FLAGS = value;
+  },
+});
+
+/**
  * @type {number|bigint}
  * @private
  */
 BitField.defaultBit = 0;
+
+/**
+ * Default bit value (v14 alias for {@link BitField.defaultBit}).
+ * @type {number|bigint}
+ * @private
+ */
+Object.defineProperty(BitField, 'DefaultBit', {
+  get() {
+    return this.defaultBit;
+  },
+  set(value) {
+    this.defaultBit = value;
+  },
+});
 
 module.exports = BitField;

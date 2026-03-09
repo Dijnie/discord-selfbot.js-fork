@@ -1,6 +1,6 @@
 {
   "name": "discord-selfbot.js",
-  "version": "3.7.1",
+  "version": "14.25.1",
   "description": "An unofficial discord.js fork for creating selfbots",
   "main": "./src/index.js",
   "types": "./typings/index.d.ts",

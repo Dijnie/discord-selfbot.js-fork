@@ -2,7 +2,7 @@
 
 const { Collection } = require('@discordjs/collection');
 const { Channel } = require('./Channel');
-const Invite = require('./Invite');
+const GroupDMInvite = require('./GroupDMInvite');
 const TextBasedChannel = require('./interfaces/TextBasedChannel');
 const MessageManager = require('../managers/MessageManager');
 const { Status, Opcodes } = require('../util/Constants');
@@ -270,16 +270,16 @@ class GroupDMChannel extends Channel {
         max_age: 86400,
       },
     });
-    return new Invite(this.client, inviteCode);
+    return new GroupDMInvite(this.client, inviteCode);
   }
 
   /**
    * Get all the invites for this Group DM Channel.
-   * @returns {Promise<Collection<string, Invite>>}
+   * @returns {Promise<Collection<string, GroupDMInvite>>}
    */
   async fetchAllInvite() {
     const invites = await this.client.api.channels(this.id).invites.get();
-    return new Collection(invites.map(invite => [invite.code, new Invite(this.client, invite)]));
+    return new Collection(invites.map(invite => [invite.code, new GroupDMInvite(this.client, invite)]));
   }
 
   /**
@@ -292,7 +292,7 @@ class GroupDMChannel extends Channel {
     let code = invite?.code;
     if (!code && URL.canParse(invite)) code = new URL(invite).pathname.slice(1);
     else code = invite;
-    await this.client.api.channels(this.id).invites[invite].delete();
+    await this.client.api.channels(this.id).invites[code].delete();
     return this;
   }
 

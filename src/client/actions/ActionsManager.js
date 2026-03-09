@@ -35,6 +35,7 @@ class ActionsManager {
     this.register(require('./GuildRoleDelete'));
     this.register(require('./GuildRoleUpdate'));
     this.register(require('./GuildRolesPositionUpdate'));
+    this.register(require('./GuildSoundboardSoundDelete'));
     this.register(require('./GuildScheduledEventCreate'));
     this.register(require('./GuildScheduledEventDelete'));
     this.register(require('./GuildScheduledEventUpdate'));

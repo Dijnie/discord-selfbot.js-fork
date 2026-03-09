@@ -1,6 +1,7 @@
 'use strict';
 
 const GuildChannel = require('./GuildChannel');
+const CategoryChannelChildManager = require('../managers/CategoryChannelChildManager');
 
 /**
  * Represents a guild category channel on Discord.
@@ -21,12 +22,12 @@ class CategoryChannel extends GuildChannel {
    */
 
   /**
-   * Channels that are a part of this category
-   * @type {Collection<Snowflake, GuildChannel>}
+   * A manager of the channels belonging to this category
+   * @type {CategoryChannelChildManager}
    * @readonly
    */
   get children() {
-    return this.guild.channels.cache.filter(c => c.parentId === this.id);
+    return new CategoryChannelChildManager(this);
   }
 
   /**

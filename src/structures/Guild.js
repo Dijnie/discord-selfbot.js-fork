@@ -4,6 +4,7 @@ const process = require('node:process');
 const { Collection } = require('@discordjs/collection');
 const AnonymousGuild = require('./AnonymousGuild');
 const GuildAuditLogs = require('./GuildAuditLogs');
+const GuildOnboarding = require('./GuildOnboarding');
 const GuildPreview = require('./GuildPreview');
 const GuildTemplate = require('./GuildTemplate');
 const Integration = require('./Integration');
@@ -18,6 +19,7 @@ const GuildInviteManager = require('../managers/GuildInviteManager');
 const GuildMemberManager = require('../managers/GuildMemberManager');
 const GuildScheduledEventManager = require('../managers/GuildScheduledEventManager');
 const GuildSettingManager = require('../managers/GuildSettingManager');
+const GuildSoundboardSoundManager = require('../managers/GuildSoundboardSoundManager');
 const GuildStickerManager = require('../managers/GuildStickerManager');
 const PresenceManager = require('../managers/PresenceManager');
 const RoleManager = require('../managers/RoleManager');
@@ -308,6 +310,8 @@ class Guild extends AnonymousGuild {
        * @type {?boolean}
        */
       this.widgetEnabled = data.widget_enabled;
+    } else {
+      this.widgetEnabled ??= null;
     }
 
     if ('widget_channel_id' in data) {
@@ -316,6 +320,8 @@ class Guild extends AnonymousGuild {
        * @type {?string}
        */
       this.widgetChannelId = data.widget_channel_id;
+    } else {
+      this.widgetChannelId ??= null;
     }
 
     if ('explicit_content_filter' in data) {
@@ -569,6 +575,20 @@ class Guild extends AnonymousGuild {
     } else {
       this.incidentsData ??= null;
     }
+
+    if (!this.soundboardSounds) {
+      /**
+       * A manager of the soundboard sounds belonging to this guild
+       * @type {GuildSoundboardSoundManager}
+       */
+      this.soundboardSounds = new GuildSoundboardSoundManager(this);
+    }
+    if (data.soundboard_sounds) {
+      this.soundboardSounds.cache.clear();
+      for (const soundboardSound of data.soundboard_sounds) {
+        this.soundboardSounds._add(soundboardSound);
+      }
+    }
   }
 
   /**
@@ -595,7 +615,10 @@ class Guild extends AnonymousGuild {
    * @param {BaseFetchOptions} [options] The options for fetching the member
    * @returns {Promise<GuildMember>}
    */
-  fetchOwner(options) {
+  async fetchOwner(options) {
+    if (!this.ownerId) {
+      throw new Error('FETCH_OWNER_ID');
+    }
     return this.members.fetch({ ...options, user: this.ownerId });
   }
 
@@ -688,6 +711,15 @@ class Guild extends AnonymousGuild {
       default:
         return 96_000;
     }
+  }
+
+  /**
+   * The maximum bitrate available for a stage channel in this guild
+   * @type {number}
+   * @readonly
+   */
+  get maximumStageBitrate() {
+    return 64_000;
   }
 
   /**
@@ -837,6 +869,15 @@ class Guild extends AnonymousGuild {
   }
 
   /**
+   * Returns a URL for the PNG widget of the guild.
+   * @param {GuildWidgetStyle} [style] The style for the widget image
+   * @returns {string}
+   */
+  widgetImageURL(style) {
+    return this.client.guilds.widgetImageURL(this.id, style);
+  }
+
+  /**
    * Options used to fetch audit logs.
    * @typedef {Object} GuildAuditLogsFetchOptions
    * @property {Snowflake|GuildAuditLogsEntry} [before] Consider only entries before this entry
@@ -868,6 +909,20 @@ class Guild extends AnonymousGuild {
     });
 
     return GuildAuditLogs.build(this, data);
+  }
+
+  /**
+   * Fetches the guild onboarding data for this guild.
+   * @returns {Promise<GuildOnboarding>}
+   * @example
+   * // Fetch guild onboarding
+   * guild.fetchOnboarding()
+   *   .then(onboarding => console.log(onboarding))
+   *   .catch(console.error);
+   */
+  async fetchOnboarding() {
+    const data = await this.client.api.guilds(this.id).onboarding.get();
+    return new GuildOnboarding(this.client, data);
   }
 
   /**
@@ -1050,6 +1105,81 @@ class Guild extends AnonymousGuild {
       },
     });
     return new WelcomeScreen(this, patchData);
+  }
+
+  /**
+   * Options used to edit the guild onboarding.
+   * @typedef {Object} GuildOnboardingEditOptions
+   * @property {GuildOnboardingPromptData[]|Collection<Snowflake, Object>} [prompts]
+   * The prompts shown during onboarding and in customize community
+   * @property {ChannelResolvable[]|Collection<Snowflake, GuildChannel>} [defaultChannels]
+   * The channels that new members get opted into automatically
+   * @property {boolean} [enabled] Whether the onboarding is enabled
+   * @property {number} [mode] The mode to edit the guild onboarding with
+   * @property {string} [reason] The reason for editing the guild onboarding
+   */
+
+  /**
+   * Data for editing a guild onboarding prompt.
+   * @typedef {Object} GuildOnboardingPromptData
+   * @property {Snowflake} [id] The id of the prompt
+   * @property {string} title The title for the prompt
+   * @property {boolean} [singleSelect] Whether users are limited to selecting one option for the prompt
+   * @property {boolean} [required] Whether the prompt is required before a user completes the onboarding flow
+   * @property {boolean} [inOnboarding] Whether the prompt is present in the onboarding flow
+   * @property {number} [type] The type of the prompt
+   * @property {GuildOnboardingPromptOptionData[]} options The options available within the prompt
+   */
+
+  /**
+   * Data for editing a guild onboarding prompt option.
+   * @typedef {Object} GuildOnboardingPromptOptionData
+   * @property {?Snowflake} [id] The id of the option
+   * @property {ChannelResolvable[]|Collection<Snowflake, GuildChannel>} [channels]
+   * The channels a member is added to when the option is selected
+   * @property {RoleResolvable[]|Collection<Snowflake, Role>} [roles]
+   * The roles assigned to a member when the option is selected
+   * @property {string} title The title of the option
+   * @property {?string} [description] The description of the option
+   * @property {?(EmojiIdentifierResolvable|Emoji)} [emoji] The emoji of the option
+   */
+
+  /**
+   * Edits the guild onboarding data for this guild.
+   * @param {GuildOnboardingEditOptions} options The options to provide
+   * @returns {Promise<Object>}
+   */
+  async editOnboarding(options) {
+    const data = await this.client.api.guilds(this.id).onboarding.put({
+      data: {
+        prompts: options.prompts?.map(prompt => ({
+          id: prompt.id,
+          title: prompt.title,
+          single_select: prompt.singleSelect,
+          required: prompt.required,
+          in_onboarding: prompt.inOnboarding,
+          type: prompt.type,
+          options: prompt.options?.map(option => {
+            const emoji = option.emoji ? this.emojis.resolve(option.emoji) : null;
+            return {
+              id: option.id,
+              channel_ids: option.channels?.map(channel => this.channels.resolveId(channel)),
+              role_ids: option.roles?.map(role => this.roles.resolveId(role)),
+              title: option.title,
+              description: option.description,
+              emoji_animated: emoji?.animated,
+              emoji_id: emoji?.id,
+              emoji_name: emoji?.name ?? (typeof option.emoji === 'string' ? option.emoji : null),
+            };
+          }),
+        })),
+        default_channel_ids: options.defaultChannels?.map(channel => this.channels.resolveId(channel)),
+        enabled: options.enabled,
+        mode: options.mode,
+      },
+      reason: options.reason,
+    });
+    return new GuildOnboarding(this.client, data);
   }
 
   /**

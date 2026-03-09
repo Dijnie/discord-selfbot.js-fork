@@ -142,6 +142,11 @@ class BaseMessageComponent {
         component = data instanceof ContainerComponent ? data : new ContainerComponent(data);
         break;
       }
+      case MessageComponentTypes.LABEL: {
+        const LabelComponent = require('./LabelComponent');
+        component = data instanceof LabelComponent ? data : new LabelComponent(data);
+        break;
+      }
       default:
         if (client) {
           client.emit(Events.DEBUG, `[BaseMessageComponent] Received component with unknown type: ${data.type}`);

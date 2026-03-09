@@ -53,6 +53,8 @@ class ThreadChannel extends Channel {
   _patch(data, partial = false) {
     super._patch(data);
 
+    if ('message' in data) this.messages._add(data.message);
+
     if ('name' in data) {
       /**
        * The name of the thread
@@ -596,6 +598,9 @@ class ThreadChannel extends Channel {
   sendTyping() {}
   createMessageCollector() {}
   awaitMessages() {}
+  createMessageComponentCollector() {}
+  awaitMessageComponent() {}
+  bulkDelete() {}
   // Doesn't work on Thread channels; setRateLimitPerUser() {}
   // Doesn't work on Thread channels; setNSFW() {}
 }

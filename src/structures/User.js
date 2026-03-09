@@ -3,7 +3,6 @@
 const Base = require('./Base');
 const VoiceState = require('./VoiceState');
 const TextBasedChannel = require('./interfaces/TextBasedChannel');
-const { Error } = require('../errors');
 const { RelationshipTypes } = require('../util/Constants');
 const SnowflakeUtil = require('../util/SnowflakeUtil');
 const UserFlags = require('../util/UserFlags');
@@ -142,7 +141,7 @@ class User extends Base {
      * @property {Snowflake} skuId The id of the avatar decoration's SKU
      */
 
-    if (data.avatar_decoration_data) {
+    if ('avatar_decoration_data' in data) {
       if (data.avatar_decoration_data) {
         /**
          * The user avatar decoration's data
@@ -297,11 +296,12 @@ class User extends Base {
 
   /**
    * A link to the user's guild tag badge.
+   * @param {ImageURLOptions} [options={}] Options for the Image URL
    * @returns {?string}
    */
-  guildTagBadgeURL() {
+  guildTagBadgeURL(options = {}) {
     if (!this.primaryGuild || !this.primaryGuild.identityGuildId || !this.primaryGuild.badge) return null;
-    return this.client.rest.cdn.GuildTagBadge(this.primaryGuild.identityGuildId, this.primaryGuild.badge);
+    return this.client.rest.cdn.GuildTagBadge(this.primaryGuild.identityGuildId, this.primaryGuild.badge, options);
   }
 
   /**
@@ -340,13 +340,11 @@ class User extends Base {
 
   /**
    * A link to the user's banner.
-   * <info>This method will throw an error if called before the user is force fetched.
-   * See {@link User#banner} for more info</info>
+   * <info>The user must be force fetched for this property to be present or be updated</info>
    * @param {ImageURLOptions} [options={}] Options for the Image URL
    * @returns {?string}
    */
   bannerURL({ format, size, dynamic } = {}) {
-    if (typeof this.banner === 'undefined') throw new Error('USER_BANNER_NOT_FETCHED');
     if (!this.banner) return null;
     return this.client.rest.cdn.Banner(this.id, this.banner, format, size, dynamic);
   }
@@ -390,7 +388,7 @@ class User extends Base {
    * @returns {Promise<DMChannel>}
    */
   createDM(force = false) {
-    return this.client.users.createDM(this.id, force);
+    return this.client.users.createDM(this.id, { force });
   }
 
   /**

@@ -59,52 +59,24 @@ class VoiceChannel extends BaseGuildVoiceChannel {
   }
 
   /**
-   * Sets the bitrate of the channel.
-   * @name VoiceChannel#setBitrate
-   * @param {number} bitrate The new bitrate
-   * @param {string} [reason] Reason for changing the channel's bitrate
-   * @returns {Promise<VoiceChannel>}
-   * @example
-   * // Set the bitrate of a voice channel
-   * voiceChannel.setBitrate(48_000)
-   *   .then(channel => console.log(`Set bitrate to ${channel.bitrate}bps for ${channel.name}`))
-   *   .catch(console.error);
+   * @typedef {Object} SendSoundboardSoundOptions
+   * @property {string} soundId The id of the soundboard sound to send
+   * @property {string} [guildId] The id of the guild the soundboard sound is a part of
    */
 
   /**
-   * Sets the RTC region of the channel.
-   * @name VoiceChannel#setRTCRegion
-   * @param {?string} rtcRegion The new region of the channel. Set to `null` to remove a specific region for the channel
-   * @param {string} [reason] The reason for modifying this region.
-   * @returns {Promise<VoiceChannel>}
-   * @example
-   * // Set the RTC region to sydney
-   * voiceChannel.setRTCRegion('sydney');
-   * @example
-   * // Remove a fixed region for this channel - let Discord decide automatically
-   * voiceChannel.setRTCRegion(null, 'We want to let Discord decide.');
+   * Send a soundboard sound to a voice channel the client user is connected to.
+   * @param {SendSoundboardSoundOptions} sound The sound to send
+   * @returns {Promise<void>}
    */
-
-  /**
-   * Sets the user limit of the channel.
-   * @name VoiceChannel#setUserLimit
-   * @param {number} userLimit The new user limit
-   * @param {string} [reason] Reason for changing the user limit
-   * @returns {Promise<VoiceChannel>}
-   * @example
-   * // Set the user limit of a voice channel
-   * voiceChannel.setUserLimit(42)
-   *   .then(channel => console.log(`Set user limit to ${channel.userLimit} for ${channel.name}`))
-   *   .catch(console.error);
-   */
-
-  /**
-   * Sets the camera video quality mode of the channel.
-   * @name VoiceChannel#setVideoQualityMode
-   * @param {VideoQualityMode|number} videoQualityMode The new camera video quality mode.
-   * @param {string} [reason] Reason for changing the camera video quality mode.
-   * @returns {Promise<VoiceChannel>}
-   */
+  async sendSoundboardSound(sound) {
+    await this.client.api.channels(this.id)['send-soundboard-sound'].post({
+      data: {
+        sound_id: sound.soundId,
+        source_guild_id: sound.guildId ?? undefined,
+      },
+    });
+  }
 }
 
 module.exports = VoiceChannel;

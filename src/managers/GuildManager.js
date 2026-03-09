@@ -309,6 +309,21 @@ class GuildManager extends CachedManager {
    */
 
   /**
+   * Returns a URL for the PNG widget of a guild.
+   * @param {GuildResolvable} guild The guild of the widget image
+   * @param {GuildWidgetStyle} [style] The style for the widget image
+   * @returns {string}
+   */
+  widgetImageURL(guild, style) {
+    const id = this.resolveId(guild);
+    const api = this.client.options.http.api;
+    const version = this.client.options.http.version;
+    let url = `${api}/v${version}/guilds/${id}/widget.png`;
+    if (style) url += `?style=${style}`;
+    return url;
+  }
+
+  /**
    * Sets the incident actions for a guild.
    * @param {GuildResolvable} guild The guild
    * @param {IncidentActionsEditOptions} incidentActions The incident actions to set
